@@ -36,6 +36,6 @@ def calcola_posizione_3d(P1, P2):
     points_3d = cv2.convertPointsFromHomogeneous(points_3d_homogeneous.T)
 
     # Stampa le coordinate 3D
-    return points_3d
+    return points_3d*-1
 
 
