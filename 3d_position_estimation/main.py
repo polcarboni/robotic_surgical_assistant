@@ -82,8 +82,8 @@ def show_meaure_button(p1x, p1y,p2x, p2y):
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
-ip_camera_1 = '192.168.1.121' #reno4
-ip_camera_2 = '192.168.1.199' #mi8 lite
+ip_camera_1 = '192.168.214.178' #reno4
+ip_camera_2 = '192.168.214.241' #mi8 lite
 
 # Inizializza i due oggetti VideoCapture per i due flussi video
 cap1 = cv2.VideoCapture(f'http://{ip_camera_1}:8080/video')  # Primo dispositivo di acquisizione (può essere una webcam o un altro dispositivo video)
