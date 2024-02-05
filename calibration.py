@@ -1,32 +1,20 @@
 import cv2
-import ipaddress
-import argparse
 import os
-
+from videoStreamUtils import VideoStreamArgs
 
 def get_arguments():
     """Parse all the arguments provided from the CLI.
     Returns:
       A list of parsed arguments.
     """
-    parser = argparse.ArgumentParser()
-
-
-    parser.add_argument("--source", "-s", type=str, required=True, help="Source of the video. It can be an IP, a path to a device, an index.")
-    parser.add_argument("--port", "-p", type=int, default=8080, help="In case of source from IP, you can set here the port. Default to 8080.")
-
+    parser = VideoStreamArgs()
     parser.add_argument("--dst", "-d", type=str, required=True, help="Destination directory where to store pictures. If it doesn't exist yet, it will be created.")
+    # If needed. add other custom stuff here.
+
+    return parser
 
 
-    return parser.parse_args()
 
-
-def is_ipv4(string):
-    try:
-        ipaddress.IPv4Network(string)
-        return True
-    except ValueError:
-        return False
 
 
 
@@ -46,25 +34,14 @@ def save_frame(event, x, y, flags, param):
 
 
 
-args = get_arguments()
-video_source = str(args.source)
+videoStreamerArgs = get_arguments()
+args = videoStreamerArgs.parse_args()
 dst_folder = str(args.dst)
-
-if is_ipv4(video_source):
-    ip_port = int(args.source)
-    source = f'http://{video_source}:{ip_port}/video'
-else:
-    try:
-        source = int(video_source)
-    except:
-        source = video_source
+capture = videoStreamerArgs.open_video_stream()
 
 
-
-capture = cv2.VideoCapture(source)
 # Inizializza il contatore dei frame
 frame_counter = 0
-
 
 if not os.path.isdir(dst_folder):
     os.mkdir(dst_folder)
