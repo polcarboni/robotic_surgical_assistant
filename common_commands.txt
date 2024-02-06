@@ -1,0 +1,7 @@
+
+
+## Aruco detection & mqtt pub:
+python detect_arucos.py --source 2 -p settings/pietro_webcam.json --mqtt settings/mqtt_pub_settings.json
+# or
+python detect_arucos.py --source 192.168.1.231 -p settings/pietro_phone.json --mqtt settings/mqtt_pub_settings.json
+
