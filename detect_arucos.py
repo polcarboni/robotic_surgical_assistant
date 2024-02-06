@@ -2,8 +2,9 @@ import cv2
 import os
 from cv2 import aruco
 import numpy as np
+import math
 
-from videoStreamUtils import VideoStreamArgs
+from videoStreamUtils import VideoStreamArgs, pre_process_image
 from cameraParams import CameraParams
 
 def get_arguments():
@@ -12,8 +13,9 @@ def get_arguments():
       A list of parsed arguments.
     """
     parser = VideoStreamArgs()
-    parser.add_argument("--params", "-p", type=str, default='', help="If you have calibration parameters \
-                        of your camera, point here the path of the .json file. They will be used to undistort the image.")
+    parser.add_argument("--params", "-p", type=str, required=True, help="Calibration parameters of your camera, point here the path of the .json file.\
+                         They will be used to undistort the image.")
+    
     # If needed. add other custom stuff here.
     return parser
 
@@ -24,6 +26,8 @@ class arucoDetection:
 
         self.id = id
         self.corners = corners.copy()
+        self.corners[:, :2, :] = corners[:, 2:, :].copy()
+        self.corners[:, 2:, :] = corners[:, :2, :].copy()
 
         corners = corners.reshape(4, 2)
         self.center = np.average(corners, 0).astype(int)
@@ -44,20 +48,19 @@ def main():
     w= int(capture.get(3))
     h = int(capture.get(4))
     
-    cameraParams = None
     cam_params_path = str(args.params)
-    if cam_params_path != '':
-        assert os.path.isfile(cam_params_path)
-        assert cam_params_path.endswith('.json')
-        cameraParams = CameraParams.from_file(cam_params_path)
-        assert cameraParams.width == w
-        assert cameraParams.height == h
-        mtx = cameraParams.intrinsics.matrix
-        dist_vec = cameraParams.distortions.dist_vector
+    assert os.path.isfile(cam_params_path)
+    assert cam_params_path.endswith('.json')
+    cameraParams = CameraParams.from_file(cam_params_path)
+    assert cameraParams.width == w
+    assert cameraParams.height == h
+    mtx = cameraParams.intrinsics.matrix
+    dist_vec = cameraParams.distortions.dist_vector
 
 
     # dictionary to specify type of the marker
     marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
+    marker_size = 0.025
     # detect the marker
     param_markers = aruco.DetectorParameters()
     aruco_detector = cv2.aruco.ArucoDetector(marker_dict, param_markers)
@@ -71,24 +74,16 @@ def main():
         if not ret:
             print("Errore nella cattura del frame.")
             break
+        frame = pre_process_image(frame, cameraParams)
         
-        if not cameraParams is None:
-            # If the scaling parameter alpha=0, it returns undistorted image with minimum unwanted pixels. So it may even remove some pixels at image corners. 
-            # If alpha=1, all pixels are retained with some extra black images.
-            alpha = 0.0 # set me between 0 and 1
-
-            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist_vec, (w,h), alpha, (w,h))
-            # undistort
-            #frame = cv2.undistort(frame, mtx, dist_vec, None, newcameramtx)
-
 
 
         detected_arucos = extract_arucos(frame, aruco_detector)
         for a in detected_arucos:
-            if not cameraParams is None:
-                rvecs, tvecs, _ = estimatePoseSingleMarkers(a.corners, 0.035, mtx, dist_vec)
-                print(f'rot: {rvecs}; translation: {tvecs}')
-            frame = render_aruco(frame, a)
+
+            rvecs, tvecs, _ = estimatePoseSingleMarkers(a.corners, marker_size, mtx, dist_vec)
+            frame = render_aruco(frame, a, show_center=False)
+            cv2.drawFrameAxes(frame, mtx, dist_vec, rvecs[0].flatten(), tvecs[0].flatten(), 0.03)
 
         cv2.imshow("Web Stream", frame)
 
@@ -107,7 +102,7 @@ def render_aruco(frame, aruco:arucoDetection,
                  show_center=True):
     if show_contour:
         cv2.polylines(
-                    frame, [aruco.corners.astype(np.int32)], True, (0, 0, 255), 4, cv2.LINE_AA
+                    frame, [aruco.corners.astype(np.int32)], True, (0, 0, 255), 1, cv2.LINE_AA
                 )
     if show_id:
         cv2.putText(frame, f"id: {aruco.id}", aruco.top_right, 
@@ -128,7 +123,7 @@ def estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
     distortion - is the camera distortion matrix
     RETURN list of rvecs, tvecs, and trash (so that it corresponds to the old estimatePoseSingleMarkers())
     '''
-    marker_points = np.array([[-marker_size / 2, marker_size / 2, 0],
+    marker_points = np.array([[-marker_size / 2,marker_size / 2, 0],
                               [marker_size / 2, marker_size / 2, 0],
                               [marker_size / 2, -marker_size / 2, 0],
                               [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)

@@ -80,18 +80,25 @@ class DistortionParams:
         return res
     
 
-class CameraParams():
-    def __init__(self, width:int, height:int,  intrinsics: IntrinsicParams, distortions:DistortionParams, name:str) -> None:
+class CameraParams:
+    def __init__(self, width:int, height:int,  intrinsics: IntrinsicParams, distortions:DistortionParams, name:str, others = {}) -> None:
         self.name = name
         self.width=width
         self.height=height
         self.intrinsics = intrinsics
         self.distortions = distortions
+        self.others = others
 
     @classmethod
     def from_dict(cls, dict:dict):
+        intrinsics = IntrinsicParams.from_dict(dict['intrinsics'])
         dist = DistortionParams.from_dict(dict['distortions'])
-        return cls(dict['width'], dict['height'], IntrinsicParams.from_dict(dict['intrinsics']), dist, dict['name'])
+        try:
+            others = dict['others']
+        except: 
+            others = {}
+
+        return cls(dict['width'], dict['height'], intrinsics, dist, dict['name'], others)
 
     @classmethod
     def from_file(cls, json_file_path:str):

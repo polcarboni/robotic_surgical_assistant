@@ -1,5 +1,5 @@
 {
-    "name": "Pietro's_webcam",
+    "name": "Pietro's webcam",
     "width": 640,
     "height": 480,
     "intrinsics": {
@@ -17,5 +17,10 @@
             -0.00139999995008111,
             0.3061999976634979
         ]
+    },
+    "others":
+    {
+        "brightness":  0,
+        "saturation": 0
     }
 }
