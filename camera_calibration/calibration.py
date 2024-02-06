@@ -1,5 +1,8 @@
 import cv2
 import os
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))+'/../')
 from videoStreamUtils import VideoStreamArgs
 
 def get_arguments():
@@ -9,8 +12,8 @@ def get_arguments():
     """
     parser = VideoStreamArgs()
     parser.add_argument("--dst", "-d", type=str, required=True, help="Destination directory where to store pictures. If it doesn't exist yet, it will be created.")
-    # If needed. add other custom stuff here.
-
+    
+    # If needed, add other custom stuff here.
     return parser
 
 
