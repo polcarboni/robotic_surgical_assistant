@@ -4,8 +4,12 @@ from cv2 import aruco
 import numpy as np
 import math
 
-from videoStreamUtils import VideoStreamArgs, pre_process_image
-from cameraParams import CameraParams
+from utils.videoStreamUtils import VideoStreamArgs, pre_process_image
+from utils.cameraParams import CameraParams
+from utils.poseBuffer import PoseBuffer
+from utils.arucoDetection import ArucoDetection, extract_arucos
+from utils.geometry import estimatePoseSingleMarkers
+from utils.mqttPeriodicPublisher import PeriodicPublisher
 
 def get_arguments():
     """Parse all the arguments provided from the CLI.
@@ -16,27 +20,11 @@ def get_arguments():
     parser.add_argument("--params", "-p", type=str, required=True, help="Calibration parameters of your camera, point here the path of the .json file.\
                          They will be used to undistort the image.")
     
+    parser.add_argument("--mqtt", type=str, default='', help="If you intend to activate a periodic MQTT publisher, set here the relative .json setting file.")
+    
     # If needed. add other custom stuff here.
     return parser
 
-
-class arucoDetection:
-    def __init__(self, id:int, corners:np.ndarray) -> None:
-        assert corners.shape == (1, 4, 2)
-
-        self.id = id
-        self.corners = corners.copy()
-        self.corners[:, :2, :] = corners[:, 2:, :].copy()
-        self.corners[:, 2:, :] = corners[:, :2, :].copy()
-
-        corners = corners.reshape(4, 2)
-        self.center = np.average(corners, 0).astype(int)
-
-        corners = corners.astype(int)
-        self.top_right = corners[0].ravel()
-        self.top_left = corners[1].ravel()
-        self.bottom_right = corners[2].ravel()
-        self.bottom_left = corners[3].ravel()
 
 
 def main():
@@ -57,26 +45,39 @@ def main():
     mtx = cameraParams.intrinsics.matrix
     dist_vec = cameraParams.distortions.dist_vector
 
+    mqtt_settings = str(args.mqtt) if args.mqtt != '' else None
 
     # dictionary to specify type of the marker
     marker_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
-    marker_size = 0.025
-    # detect the marker
+    marker_size = 0.025     # 25mm
     param_markers = aruco.DetectorParameters()
     aruco_detector = cv2.aruco.ArucoDetector(marker_dict, param_markers)
 
+    # ID 0 is for tweezers, ID 1 is for spoon.
+    available_tool_ids = [0, 1]
+    
+    buffers = {}
+    mqtt_publishers = []
+    for t in available_tool_ids:
+        b = PoseBuffer()
+        buffers[t] = b
+
+        if not mqtt_settings is None:
+            pub = PeriodicPublisher(mqtt_settings, str(t), b)
+            mqtt_publishers.append(pub)
+    
+
     # Crea una finestra per visualizzare lo stream
     cv2.namedWindow("Web Stream")
-
     while True:
         ret, frame = capture.read()
 
         if not ret:
             print("Errore nella cattura del frame.")
             break
-        frame = pre_process_image(frame, cameraParams)
-        
 
+        # if you want, you can modify saturation, bightness etc
+        frame = pre_process_image(frame, cameraParams)
 
         detected_arucos = extract_arucos(frame, aruco_detector)
         for a in detected_arucos:
@@ -84,6 +85,9 @@ def main():
             rvecs, tvecs, _ = estimatePoseSingleMarkers(a.corners, marker_size, mtx, dist_vec)
             frame = render_aruco(frame, a, show_center=False)
             cv2.drawFrameAxes(frame, mtx, dist_vec, rvecs[0].flatten(), tvecs[0].flatten(), 0.03)
+
+            if a.id in available_tool_ids:
+                buffers[a.id].set_new_data(tvecs[0], rvecs[0])
 
         cv2.imshow("Web Stream", frame)
 
@@ -94,10 +98,12 @@ def main():
     # Rilascia le risorse
     capture.release()
     cv2.destroyAllWindows()
+    for p in mqtt_publishers:
+        p.stop()
 
 
 
-def render_aruco(frame, aruco:arucoDetection, 
+def render_aruco(frame, aruco:ArucoDetection, 
                  show_contour=True, show_id=True,
                  show_center=True):
     if show_contour:
@@ -113,41 +119,6 @@ def render_aruco(frame, aruco:arucoDetection,
 
     return frame
     
-def estimatePoseSingleMarkers(corners, marker_size, mtx, distortion):
-    '''
-    This will estimate the rvec and tvec for each of the marker corners detected by:
-       corners, ids, rejectedImgPoints = detector.detectMarkers(image)
-    corners - is an array of detected corners for each detected marker in the image
-    marker_size - is the size of the detected markers
-    mtx - is the camera matrix
-    distortion - is the camera distortion matrix
-    RETURN list of rvecs, tvecs, and trash (so that it corresponds to the old estimatePoseSingleMarkers())
-    '''
-    marker_points = np.array([[-marker_size / 2,marker_size / 2, 0],
-                              [marker_size / 2, marker_size / 2, 0],
-                              [marker_size / 2, -marker_size / 2, 0],
-                              [-marker_size / 2, -marker_size / 2, 0]], dtype=np.float32)
-    trash = []
-    rvecs = []
-    tvecs = []
-    for c in corners:
-        nada, R, t = cv2.solvePnP(marker_points, c, mtx, distortion, False, cv2.SOLVEPNP_IPPE_SQUARE)
-        rvecs.append(R)
-        tvecs.append(t)
-        trash.append(nada)
-    return rvecs, tvecs, trash
-
-
-def extract_arucos(frame, aruco_detector:aruco.ArucoDetector)->list:
-    
-    # turning the frame to grayscale-only (for efficiency)
-    marker_corners, marker_IDs, reject = aruco_detector.detectMarkers(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
-    results = []
-    if marker_corners:
-        for ids, corners in zip(marker_IDs, marker_corners):
-            results.append(arucoDetection(ids[0], corners))
-
-    return results
 
 
 if __name__ == '__main__':

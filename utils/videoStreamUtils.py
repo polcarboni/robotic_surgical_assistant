@@ -2,8 +2,10 @@ from argparse import ArgumentParser
 import ipaddress
 import os
 import cv2
-import cameraParams
 import numpy as np
+
+from .cameraParams import CameraParams
+
 
 class VideoStreamArgs(ArgumentParser):
     def __init__(self) -> None:
@@ -32,7 +34,7 @@ class VideoStreamArgs(ArgumentParser):
         return cv2.VideoCapture(self.data_source_)
 
 
-def pre_process_image(frame, camera:cameraParams):
+def pre_process_image(frame, camera:CameraParams):
     brightness_adj = 0
     saturation_adj = 0
     if 'brightness' in camera.others:

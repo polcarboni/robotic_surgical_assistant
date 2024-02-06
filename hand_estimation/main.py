@@ -1,10 +1,10 @@
 import cv2
 import numpy as np
 from multiprocessing import Process, Value
-from utils import calcola_posizione_3d
 import random, time
 
 from paho.mqtt import client as mqtt_client
+from hand_estimation.utils import calcola_posizione_3d
 
 
 broker = '127.0.0.1'
@@ -38,7 +38,7 @@ p2x = Value('i', 0)
 p2y = Value('i', 0)
 
 
-def pubblish_hand_position(position):
+def publish_hand_position(position):
     result = publisher.publish(topic, position)
     # result: [0, 1]
     status = result[0]
@@ -139,7 +139,7 @@ try:
     while flag:
         time.sleep(2)
         distance = calcola_posizione_3d([p1x.value, p1y.value], [p2x.value, p2y.value])
-        pubblish_hand_position(str(distance))
+        publish_hand_position(str(distance))
 except KeyboardInterrupt:
     flag = False
 

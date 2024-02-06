@@ -6,7 +6,7 @@ import time
 from paho.mqtt import client as mqtt_client
 
 
-broker = '192.168.8.101'
+broker = 'localhost'
 port = 1883
 topic = "python/mqtt"
 # Generate a Client ID with the publish prefix.
@@ -28,7 +28,7 @@ def connect_mqtt():
     return client
 
 
-def publish(client):
+def publish(client:mqtt_client.Client):
     msg_count = 1
     while True:
         time.sleep(1)

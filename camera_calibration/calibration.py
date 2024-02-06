@@ -3,7 +3,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__))+'/../')
-from videoStreamUtils import VideoStreamArgs
+from utils.videoStreamUtils import VideoStreamArgs
 
 def get_arguments():
     """Parse all the arguments provided from the CLI.
@@ -15,10 +15,6 @@ def get_arguments():
     
     # If needed, add other custom stuff here.
     return parser
-
-
-
-
 
 
 def save_frame(event, x, y, flags, param):
@@ -33,9 +29,6 @@ def save_frame(event, x, y, flags, param):
         else:
             print(f'Impossible to store {frame_name}')
         
-
-
-
 
 videoStreamerArgs = get_arguments()
 args = videoStreamerArgs.parse_args()
