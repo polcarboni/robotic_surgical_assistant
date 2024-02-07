@@ -1,7 +1,7 @@
-from control.create_world import World
-from control.control import Control, generate_pose
+from controls.create_world import World
+from controls.control import Control, generate_pose
 import time
-objects = ["table","table2","human","start_tray","end_tray", "lanchet", "tool2","tool3"]
+objects = ["table","table2","human","start_tray","end_tray","tool2"]
 world = World(objects)
 
 cntl = Control(world.get_controllers() )
@@ -12,7 +12,7 @@ cntl.move_to_rest()
 cntl.open_gripper()
 input("Press enter for next step")
 
-cntl.move_to_position(generate_pose(0,-0.5,0.97, 3.1415,0,-3.1415/4))
+cntl.move_to_position(generate_pose(0,-0.5,0.975, 3.1415,0,-3.1415/4))
 input("Press enter for next step")
 
 cntl.close_gripper()

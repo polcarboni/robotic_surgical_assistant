@@ -2,6 +2,7 @@ import franka_gripper.msg
 import actionlib
 from tf.transformations import quaternion_from_euler
 import geometry_msgs.msg
+import rospy
 
 class Control:
     def __init__(self, world):
@@ -34,7 +35,7 @@ class Control:
         client.wait_for_server()
 
         goal = franka_gripper.msg.MoveGoal()
-        goal.width = 0.06
+        goal.width = 0.08
         goal.speed = 0.3
 
         client.send_goal(goal)
@@ -46,15 +47,44 @@ class Control:
         client.wait_for_server()
 
         goal = franka_gripper.msg.GraspGoal()
-        goal.width = 0.03
-        goal.epsilon.inner = 0.04
-        goal.epsilon.outer = 0.04
+        goal.width = 0.025
+        goal.epsilon.inner = 0.02
+        goal.epsilon.outer = 0.02
         goal.speed = 0.1
-        goal.force = 10
+        goal.force = 15
 
         client.send_goal(goal)
         client.wait_for_result()
-        return client.get_result()
+        r =  client.get_result()
+        if r.success:
+
+            # If success create a box also in moveit between the fingers
+            box_pose = geometry_msgs.msg.PoseStamped()
+            box_pose.header.frame_id = "panda_hand"
+            box_pose.pose.orientation.w = 1.0
+            box_pose.pose.position.z = 0.1  # above the panda_hand frame
+            box_name = "attached_box"
+            self.scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.05))
+
+            # Check if moveit received the command and then attach the box to the arm
+            scene_objects = self.scene.get_known_object_names()
+            while "attached_box" not in scene_objects:
+                rospy.sleep(0.1)
+                scene_objects = self.cene.get_known_object_names()
+
+            touch_links = self.robot.get_link_names(group="panda_hand")
+            self.scene.attach_box("panda_link8", "attached_box", touch_links=touch_links)
+
+            attached_objects = self.scene.get_attached_objects()
+            while "attached_box" not in attached_objects:
+                rospy.sleep(0.1)
+                attached_objects = self.scene.get_attached_objects()
+
+            return True
+        else:
+            # se chiude senza niente da un errore, ma funziona lo stesso
+            print(r.error)
+            return r.error
     
     def move_to_config(self, q):
         joint_goal = self.move_group.get_current_joint_values()
