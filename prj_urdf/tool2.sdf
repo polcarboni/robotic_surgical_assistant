@@ -1,0 +1,63 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <model name='tool2'>
+    <link name="handle">
+    	<pose>0 -0.5 0.87 0 0 0</pose>
+      <inertial>
+        <mass>0.001</mass>
+        <inertia>
+          <ixx>0.0002</ixx>
+          <iyy>0.0002</iyy>
+          <izz>0.0002</izz>
+        </inertia>
+      </inertial>
+      <visual name='visual_handle'>
+        <geometry>
+          <box>
+            <size>0.3 0.03 0.04</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Black</name>
+          </script>
+        </material>
+      </visual>
+      <collision name='collision_handle'>
+        <geometry>
+          <box>
+            <size>0.3 0.03 0.04</size>
+          </box>
+        </geometry>
+        <surface>
+         <friction>
+            <ode>
+              <mu>5000</mu>
+              <mu2>5000</mu2>
+              <fdir1>0 0 0</fdir1>
+              <slip1>0</slip1>
+              <slip2>0</slip2>
+            </ode>
+            <torsional>
+              <coefficient>1000000</coefficient>
+            </torsional>
+          </friction>
+          <contact>
+            <ode>
+              <kp>1e+13</kp>
+              <kd>1000000</kd>
+              <max_vel>0</max_vel>
+              <min_depth>0.002</min_depth>
+            </ode>
+            <bullet>
+              <kp>1e+13</kp>
+              <kd>1000000</kd>
+            </bullet>
+          </contact>
+        </surface>
+      </collision>
+    </link>
+  
+</model>
+</sdf>

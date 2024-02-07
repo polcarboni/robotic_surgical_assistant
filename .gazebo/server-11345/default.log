@@ -1,0 +1,18 @@
+Gazebo multi-robot simulator, version 11.11.0
+Copyright (C) 2012 Open Source Robotics Foundation.
+Released under the Apache 2 License.
+http://gazebosim.org
+
+
+(1707324551 39326297) [Msg] Waiting for master.
+(1707324551 43820443) [Msg] Connected to gazebo master @ http://127.0.0.1:11345
+(1707324551 44001204) [Msg] Publicized address: 10.0.2.15
+(1707324551 849480059) [Msg] Loading world file [/usr/share/gazebo-11/worlds/empty.world]
+(1707324552 301330431) Init world[default]
+(1707324552 893769349) ODESliderJoint::SetAnchor not implemented.
+(1707324552 893876675) ODESliderJoint::SetAnchor not implemented.
+(1707324553 900866656) ODESliderJoint::Anchor not implemented.
+(1707324553 900894878) ODESliderJoint::Anchor not implemented.
+(1707324597 944584242) [Wrn] [Publisher.cc:135] Queue limit reached for topic /gazebo/default/physics/contacts, deleting message. This warning is printed only once.
+(1707324742 240962161) [Err] [World.cc:1285] Error advertising service [/tool2/shininess]
+(1707324934 312473633) [Err] [World.cc:1285] Error advertising service [/tool2/shininess]

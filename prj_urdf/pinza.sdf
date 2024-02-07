@@ -1,0 +1,64 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <model name='lanchet'>
+    <link name="handle">
+    	<pose>0 -0.5 0.90 0 0 -1.5757</pose>
+      <inertial>
+        <mass>0</mass>
+        <inertia>
+          <ixx>0.00001</ixx>
+          <iyy>0.00001</iyy>
+          <izz>0.00001</izz>
+        </inertia>
+      </inertial>
+      <visual name='visual_handle'>
+        <geometry>
+          <mesh>
+          	<uri>model://pinza/meshes/pinza_v2.dae</uri>
+          	<scale>0.002 0.002 0.002</scale>
+          </mesh>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/Blue</name>
+          </script>
+        </material>
+      </visual>
+      <collision name='collision_handle'>
+        <geometry>
+          <box>
+            <size>0.06 0.3 0.02</size>
+          </box>
+        </geometry>
+        <surface>
+          <friction>
+            <ode>
+              <mu>5000</mu>
+              <mu2>5000</mu2>
+              <fdir1>0 0 0</fdir1>
+              <slip1>0</slip1>
+              <slip2>0</slip2>
+            </ode>
+            <torsional>
+              <coefficient>100000000</coefficient>
+            </torsional>
+          </friction>
+          <contact>
+            <ode>
+              <kp>1e+13</kp>
+              <kd>1000000</kd>
+              <max_vel>0</max_vel>
+              <min_depth>0.002</min_depth>
+            </ode>
+            <bullet>
+              <kp>1e+13</kp>
+              <kd>1000000</kd>
+            </bullet>
+          </contact>
+        </surface>
+      </collision>
+    </link>
+  
+</model>
+</sdf>
