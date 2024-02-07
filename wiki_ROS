@@ -1,0 +1,5 @@
+First of all, launch the gazebo simulation with the robot. Remember that you have to specify the location of the first link with respect to the world frame. Use this command
+
+roslaunch panda_moveit_config demo_gazebo.launch z:=0.83 x:=0.6 y:=-0.8 use_rviz:=false
+
+Once gazebo is properly started, launch main.py
