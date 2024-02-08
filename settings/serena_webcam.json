@@ -1,0 +1,26 @@
+{
+    "name": "Serena's webcam",
+    "width": 640,
+    "height": 480,
+    "intrinsics": {
+        "fx": 637.1855,
+        "fy": 637.5643,
+        "cx": 316.6597,
+        "cy": 250.5053,
+        "skew": 0
+    },
+    "distortions": {
+        "dist_vector": [
+            0.0467,
+            -0.3611,
+            0.0007,
+            -0.0025,
+            1.2467
+        ]
+    },
+    "others":
+    {
+        "brightness":  0,
+        "saturation": 0
+    }
+}
