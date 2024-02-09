@@ -15,7 +15,7 @@
         <geometry>
           <mesh>
           	<uri>model://pinza/meshes/pinza_v2.dae</uri>
-          	<scale>0.002 0.002 0.002</scale>
+          	<scale>0.002 0.002 0.004</scale>
           </mesh>
         </geometry>
         <material>
@@ -27,9 +27,10 @@
       </visual>
       <collision name='collision_handle'>
         <geometry>
-          <box>
-            <size>0.06 0.3 0.02</size>
-          </box>
+		<mesh>
+			<uri>model://pinza/meshes/pinza_v2.dae<uri>
+			<scale>0.002 0.002 0.004</scale>
+		</mesh>
         </geometry>
         <surface>
           <friction>
