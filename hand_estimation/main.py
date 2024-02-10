@@ -7,6 +7,9 @@ from paho.mqtt import client as mqtt_client
 from hand_estimation.utils import calcola_posizione_3d
 
 
+#hand tracking: https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
+
+
 broker = '127.0.0.1'
 port = 1883
 topic = "topics/hand_position"
@@ -116,6 +119,9 @@ def show_meaure_button(p1x, p1y,p2x, p2y):
     while True:
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+
+
+
 
 ip_camera_1 = '192.168.193.243' #reno4
 ip_camera_2 = '192.168.193.241' #mi8 lite
