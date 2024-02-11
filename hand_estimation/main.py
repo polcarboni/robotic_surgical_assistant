@@ -4,7 +4,7 @@ from multiprocessing import Process, Value
 import random, time
 
 from paho.mqtt import client as mqtt_client
-from hand_estimation.utils import calcola_posizione_3d
+from hand_estimation.old_utils import calcola_posizione_3d
 
 
 #hand tracking: https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
@@ -15,8 +15,6 @@ port = 1883
 topic = "topics/hand_position"
 # Generate a Client ID with the publish prefix.
 client_id = f'publish-{random.randint(0, 1000)}'
-# username = 'emqx'
-# password = 'public'
 
 def connect_mqtt():
     def on_connect(client, userdata, flags, rc):
@@ -41,8 +39,8 @@ p2x = Value('i', 0)
 p2y = Value('i', 0)
 
 
-def publish_hand_position(position):
-    result = publisher.publish(topic, position)
+def publish_hand_position(client, topic:str, data:str):
+    result = client.publish(topic, data)
     # result: [0, 1]
     status = result[0]
     if status != 0:
@@ -145,7 +143,7 @@ try:
     while flag:
         time.sleep(2)
         distance = calcola_posizione_3d([p1x.value, p1y.value], [p2x.value, p2y.value])
-        publish_hand_position(str(distance))
+        publish_hand_position(publisher, topic, str(distance))
 except KeyboardInterrupt:
     flag = False
 

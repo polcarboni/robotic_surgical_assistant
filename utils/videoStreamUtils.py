@@ -8,30 +8,48 @@ from .cameraParams import CameraParams
 
 
 class VideoStreamArgs(ArgumentParser):
-    def __init__(self) -> None:
+    def __init__(self, how_many_cameras=1) -> None:
         super().__init__()
-        self.add_argument("--source", type=str, required=True, help="Source of the video. It can be an IP, a path to a device, an index.")
-        self.add_argument("--port", type=int, default=4747, help="In case of source from IP, you can set here the port. Default to 8080.")
+        assert how_many_cameras > 0
+        self.num_cameras = how_many_cameras
+        if how_many_cameras == 1:
+            self.add_argument("--source", type=str, required=True, help="Source of the video. It can be an IP, a path to a device, an index.")
+            self.add_argument("--port", type=int, default=4747, help="In case of source from IP, you can set here the port. Default to 4747.")
+        else:
+            for i in range(how_many_cameras):
+                self.add_argument(f"--source_{i}", type=str, required=True, help=f"Source of the video for camera {i}. It can be an IP, a path to a device, an index.")
+                self.add_argument(f"--port_{i}", type=int, default=4747, help="In case of source from IP, you can set here the port. Default to 4747.")
         
     
     def parse_args(self):
         args = super().parse_args()
 
-        video_src = str(args.source)
+        self.data_sources_ = []
 
-        if is_ipv4(video_src):
-            ip_port = int(args.port)
-            source = f'http://{video_src}:{ip_port}/video'
+        if self.num_cameras == 1:
+            video_src = [str(args.source)]
+            ip_ports = [str(args.port)]
         else:
-            try:
-                source = int(video_src)
-            except:
-                source = video_src
-        self.data_source_ = source
+            video_src = [getattr(args, f'source_{i}') for i in range(self.num_cameras)]
+            ip_ports = [getattr(args, f'port_{i}') for i in range(self.num_cameras)]
+
+        for src, port in zip(video_src, ip_ports):
+            if is_ipv4(src):
+                source = f'http://{src}:{port}/video'
+            else:
+                try:
+                    source = int(src)
+                except:
+                    source = src
+            self.data_sources_.append(source)
         return args
 
     def open_video_stream(self) -> cv2.VideoCapture:
-        return cv2.VideoCapture(self.data_source_)
+        streams = [cv2.VideoCapture(s) for s in self.data_sources_]
+        if len(streams) == 1:
+            return streams[0]
+        
+        return streams
 
 
 def pre_process_image(frame, camera:CameraParams):
