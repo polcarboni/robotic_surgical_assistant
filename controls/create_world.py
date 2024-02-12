@@ -70,7 +70,7 @@ class World:
         size = tuple([float(x) for x in model_xml[model_xml.find("<size>")+6:model_xml.find("</size>")].split()])
 
         name = f"tool_{name}_{self.number_instances}"
-
+        self.names.append(name)
         box_pose = geometry_msgs.msg.PoseStamped()
         box_pose.header.frame_id = "world"
         box_pose.pose.orientation.w = 1.0

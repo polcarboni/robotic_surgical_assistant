@@ -6,14 +6,15 @@ import json
 class Assistant:
     def __init__(self, filename = "/home/leo/robotic_surgical_assistant/controls/object_positions.json"):
         self.objects = ["start_tray","end_tray","pinza_box", "cucchiaio_box" ]
-        self. = World()
+        self.world = World()
         with open(filename, "r") as f:
             self.positions = json.load(f)
 
         for obj in self.objects:
             self.world.insert_tool(obj, tuple(self.positions[obj]))
 
-        self.cntl = Control(world.get_controllers() )
+        self.cntl = Control(self.world.get_controllers() )
+        self.cntl.move_to_rest()
         
     def get_current_conf(self):
         return self.cntl.get_current_conf()
@@ -27,8 +28,8 @@ class Assistant:
         Input: name of tool, destination_coordinates
         '''
         self.cntl.open_gripper()
-        loc = self.position[name]
-        self.cntl.move_to_position(generate_pose(loc[0], loc[1], loc[2], 3.1415, 0, -3.1415/4))
+        loc = self.positions[name]
+        self.cntl.move_to_position(generate_pose((loc[0], loc[1], loc[2], 3.1415, 0, -3.1415/4)))
         self.cntl.close_gripper()
         self.cntl.move_to_position(generate_pose(destination_coordinates))
         self.cntl.open_gripper() # ToDo: manage the interaction with the human
@@ -45,10 +46,25 @@ class Assistant:
         self.cntl.move_to_position(generate_pose(loc[0], loc[1], loc[2], 3.1415, 0, -3.1415/4))
         self.cntl.open_gripper() # ToDo: manage the interaction with the human
         self.cntl.move_to_rest()
+    
+    def test(self,name):
+        '''
+        Input: name of tool, destination_coordinates
+        '''
+        self.cntl.open_gripper()
+        loc = self.positions[name]
+        self.cntl.move_to_position(generate_pose((loc[0], loc[1], loc[2]+0.1, 3.1415, 0, -3.1415/4)))
+        self.cntl.close_gripper()
+        self.cntl.move_to_rest()
+        self.cntl.open_gripper() # ToDo: manage the interaction with the human
 
 
 def main():
     assistant = Assistant()
+    assistant.test("pinza_box")
+    assistant.test("cucchiaio_box")
+    assistant.world.delete_tool("tool_pinza_box_2")
+    assistant.world.delete_tool("tool_cucchiaio_box_3")
 
     '''TO DO: manage interaction with other component via MQTT:
 

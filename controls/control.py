@@ -40,7 +40,31 @@ class Control:
 
         client.send_goal(goal)
         client.wait_for_result()
-        return client.get_result()
+        r =  client.get_result()
+
+        self.scene.remove_attached_object("panda_link8", name="attached_box")
+
+        attached_objects = self.scene.get_attached_objects()
+        while "attached_box" in attached_objects:
+            rospy.sleep(0.1)
+            attached_objects = self.scene.get_attached_objects()
+
+        self.scene.remove_world_object("attached_box")
+
+        scene_objects = self.scene.get_known_object_names()
+        while "attached_box" in scene_objects:
+            rospy.sleep(0.1)
+            scene_objects = self.scene.get_known_object_names()
+
+
+        if r is None:
+            print("Open Gripper Error")
+            return False
+        elif r.success:
+            return True
+        else:
+            print(r.error)
+            return False
 
     def close_gripper(self):
         client = actionlib.SimpleActionClient('/franka_gripper/grasp', franka_gripper.msg.GraspAction)
@@ -99,11 +123,11 @@ class Control:
         self.move_group.stop()
         self.move_group.clear_pose_targets()
 
-def generate_pose(x, y, z, rx, py, yz):
+def generate_pose(coord_or):
     # Converts coordinates + RPY in Pose
     # x, y, z coordinted referred to world RF
     # rx, py, yz rotation angle (in radiants) as roll, pith and yaw on x,y,z
-
+    x, y, z, rx, py, yz = coord_or
     pose = geometry_msgs.msg.Pose()
 
     pose.position.x = x
@@ -115,5 +139,4 @@ def generate_pose(x, y, z, rx, py, yz):
     pose.orientation.y = quat[1]
     pose.orientation.z = quat[2]
     pose.orientation.w = quat[3]
-
     return pose
