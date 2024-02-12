@@ -146,10 +146,10 @@ class ExtrinsicParams:
         return "\n-- Extrinsic params :--\n{}\n".format(self.matrix)
     
 
-class Mapping:
-    def __init__(self, src_dev:CameraParams, dst_dev:CameraParams, extr_A_to_B:ExtrinsicParams) -> None:
-        self.src = src_dev
-        self.dst = dst_dev
+class StereoCamera:
+    def __init__(self, camera_A:CameraParams, camera_B:CameraParams, extr_A_to_B:ExtrinsicParams) -> None:
+        self.src = camera_A
+        self.dst = camera_B
         self.extrinsics = extr_A_to_B
 
     @classmethod
@@ -165,16 +165,16 @@ class Mapping:
             # Reading from json file
             json_object = json.load(openfile)
 
-        map = Mapping.from_dict(json_object)
+        map = StereoCamera.from_dict(json_object)
         if verbose:
-            print("Loaded mapping from {}:{}".format(json_file_path, str(map)))
+            print("Loaded stereoCamera data from {}:{}".format(json_file_path, str(map)))
         return map
 
     def toDict(self):
         return {'src':self.src.toDict(), 'dst':self.dst.toDict(), 'src_to_dst': self.extrinsics.toDict()}
 
     def __str__(self):
-        res = "\nMapping from camera {} to camera {}:\n".format(self.src.name, self.dst.name)
+        res = "\StereoCamera Data from {} to {}:\n".format(self.src.name, self.dst.name)
         res += "-----------------------------------------"
         res += "\nSource:"
         res += str(self.src)

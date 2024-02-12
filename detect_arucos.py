@@ -63,7 +63,7 @@ def main():
         buffers[t] = b
 
         if not mqtt_settings is None:
-            pub = PeriodicPublisher(mqtt_settings, str(t), b)
+            pub = PeriodicPublisher(mqtt_settings, f'tool-{t}', b)
             mqtt_publishers.append(pub)
     
 
