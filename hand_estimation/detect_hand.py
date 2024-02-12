@@ -48,6 +48,7 @@ def main():
         pub = PeriodicPublisher(mqtt_settings, f'hand_position', data_buffer)
 
     tracker = HandDetector()
+    dist = None
 
     cv2.namedWindow("Stream_0")
     cv2.namedWindow("Stream_1")
@@ -70,11 +71,10 @@ def main():
             
             alpha = 1.0
             mtx = single_cam_params.intrinsics.matrix
-            dist = single_cam_params.distortions.dist_vector
+            distortion = single_cam_params.distortions.dist_vector
             w, h = single_cam_params.width, single_cam_params.height
-            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), alpha, (w, h))
-            frame = cv2.undistort(frame, mtx, dist, None, newcameramtx)
-
+            newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, distortion, (w, h), alpha, (w, h))
+            frame = cv2.undistort(frame, mtx, distortion, None, newcameramtx)
             # crop the image
             x, y, w, h = roi
             frame = frame[y:y+h, x:x+w]
@@ -85,19 +85,31 @@ def main():
             #print(result.hand_landmarks[0])
             position = get_hand_central_point(result, w, h)
             positions.append(position)
+
+            
+
             if not position is None:
                 cv2.circle(frame, (position), radius=5, color=(0, 255, 0), thickness=-1)
+
+                #plot also distance text for the previous frame, if available
+                if not dist is None:
+                    text_pos = (position[0] + 5, position[1] + 5)
+                    distance_text = "{:.3f}".format(dist)
+                    cv2.putText(frame, distance_text,(text_pos), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 0), 1, cv2.LINE_AA)
 
             #frame = draw_landmarks_on_image(frame, result)
 
             cv2.imshow(f"Stream_{i}", frame)
 
         assert len(positions) == 2
+        dist = None
         if not (positions[0] is None or positions[1] is None):
             k1, k2 = stereoParams.src.intrinsics.matrix, stereoParams.dst.intrinsics.matrix
             delta_rot, delta_pos = stereoParams.extrinsics.rot_matrix, stereoParams.extrinsics.trans_vector
-            dist = get_distance_from_stereo(positions[0], positions[1], k1, k2, delta_rot, delta_pos)
-            print(dist)
+            dist_3d = get_distance_from_stereo(positions[0], positions[1], k1, k2, delta_rot.T, -delta_pos)
+            data_buffer.set_new_data(dist_3d)
+
+            dist = np.linalg.norm(dist_3d)
 
 
 
