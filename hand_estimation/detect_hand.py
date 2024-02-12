@@ -125,3 +125,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+    # check that the two webcams coincide:
+    # serena's webcam should be in Stream_0, Pietro's webcam in Stream_1 
+    # python hand_estimation/detect_hand.py --source_0 /dev/video2 --source_1 /dev/video4 --params settings/stereo_setup.json  --mqtt settings/mqtt_pub_settings.json

@@ -123,3 +123,4 @@ def render_aruco(frame, aruco:ArucoDetection,
 
 if __name__ == '__main__':
     main()
+    # python detect_arucos.py --source 2 --params settings/pietro_webcam.json
