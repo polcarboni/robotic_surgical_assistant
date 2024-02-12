@@ -11,6 +11,7 @@ from utils.cameraParams import StereoCamera
 from utils.poseBuffer import PoseBuffer
 from utils.mqttPeriodicPublisher import PeriodicPublisher
 from hands_tracker import *
+from utils.geometry import get_distance_from_stereo
 
 
 
@@ -25,55 +26,6 @@ def get_arguments():
     
     # If needed. add other custom stuff here.
     return parser
-
-
-def show_stream(stream_num, capture, px, py):
-    colore_segmentazione_start, colore_segmentazione_end = np.array([0,0,0]), np.array([255,255,255])
-    # Funzione richiamata al click del mouse
-    def mouse_click_event(event, x, y, flags, param):
-        nonlocal colore_segmentazione_start, colore_segmentazione_end
-        if event == cv2.EVENT_LBUTTONDOWN:
-            window = param[0][y-12:y+13, x-12:x+13]  # Estrae la finestra 25x25 centrata sul punto (x, y)
-            b_min, g_min, r_min = window.mean(axis=(0,1)) - 15
-            b_max, g_max, r_max = window.mean(axis=(0,1)) + 15
-            colore_segmentazione_start = np.array([b_min, g_min, r_min])
-            colore_segmentazione_end = np.array([b_max, g_max, r_max])
-            # counter.value += 1
-            # print(stream_num, counter.value)
-            
-    while True:
-        # Cattura il frame dallo stream
-        ret, frame = capture.read()
-
-        # frame = cv2.resize(frame, (frame.shape[1] // 2, frame.shape[0] // 2))
-
-        # Verifica se il frame è stato catturato correttamente
-        if not ret:
-            print(f"Errore nella cattura del frame per lo stream {stream_num}.")
-            break
-
-        maschera = cv2.inRange(frame, colore_segmentazione_start, colore_segmentazione_end)
-        y, x = np.where(maschera > 0)
-
-        if len(x) > 0 and len(y) > 0 and np.sum(colore_segmentazione_start)>0:
-            # Calcola il centroide medio
-            px.value = cX = int(np.mean(x))
-            py.value = cY = int(np.mean(y))
-
-            # Disegna il centroide sul frame
-            cv2.circle(frame, (cX, cY), 5, (0, 255, 0), 3)  # Disegna un cerchio verde
-        
-        # Visualizza il frame
-        cv2.imshow(f'Stream {stream_num}', frame)
-
-        
-        cv2.setMouseCallback(f'Stream {stream_num}', mouse_click_event, [frame])
-
-        # Esci se viene premuto il tasto 'q'
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    # Rilascia le risorse
-    capture.release()
 
 
 
@@ -102,6 +54,7 @@ def main():
 
     
     while True:
+        positions = []
         for i, cap in enumerate(video_streams):
             ret, frame = cap.read()
 
@@ -120,19 +73,33 @@ def main():
             dist = single_cam_params.distortions.dist_vector
             w, h = single_cam_params.width, single_cam_params.height
             newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w, h), alpha, (w, h))
-            dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
+            frame = cv2.undistort(frame, mtx, dist, None, newcameramtx)
 
             # crop the image
             x, y, w, h = roi
-            frame = dst[y:y+h, x:x+w]
+            frame = frame[y:y+h, x:x+w]
             
 
             frame = frame.astype(np.uint8)
             result = tracker.detect(frame)
             #print(result.hand_landmarks[0])
-            frame = draw_landmarks_on_image(frame, result)
+            position = get_hand_central_point(result, w, h)
+            positions.append(position)
+            if not position is None:
+                cv2.circle(frame, (position), radius=5, color=(0, 255, 0), thickness=-1)
+
+            #frame = draw_landmarks_on_image(frame, result)
 
             cv2.imshow(f"Stream_{i}", frame)
+
+        assert len(positions) == 2
+        if not (positions[0] is None or positions[1] is None):
+            k1, k2 = stereoParams.src.intrinsics.matrix, stereoParams.dst.intrinsics.matrix
+            delta_rot, delta_pos = stereoParams.extrinsics.rot_matrix, stereoParams.extrinsics.trans_vector
+            dist = get_distance_from_stereo(positions[0], positions[1], k1, k2, delta_rot, delta_pos)
+            print(dist)
+
+
 
         # Esci se viene premuto il tasto 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
