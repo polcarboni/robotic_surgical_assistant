@@ -1,12 +1,11 @@
 from paho.mqtt import client as mqtt_client
-import voice_recognition as sr
+import speech_recognition as sr
 import time
 
 ip_broker = "192.168.207.95"
 pinze = ["pinze", "vince", "pinzi", "pinza", "pinse"]
 
-client = mqtt_client.Client()
-#client.on_connect = on_connect
+client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION1)
 client.connect(ip_broker, 1883)
 client.loop_start()
 
@@ -27,14 +26,13 @@ def listen_and_print(interval=0.5):
                 # TOOL 1
                 if "cucchiaio" in text:
                     print("CUCCHIAIO")
-                    #client.publish("activation/0", "Cucchiaio")
-                
+                    client.publish("activation/1", "Cucchiaio")
                 
                 # TOOL 2
                 for i in pinze:
                     if i in text:
                         print("PINZE")
-                        #client.publish("activation/1", "Pinze")
+                        client.publish("activation/0", "Pinze")
             
             
             except sr.UnknownValueError:
