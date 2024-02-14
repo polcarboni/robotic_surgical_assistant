@@ -3,12 +3,13 @@ import os
 from cv2 import aruco
 import numpy as np
 import math
+from scipy.spatial.transform import Rotation as R
 
 from utils.videoStreamUtils import VideoStreamArgs, pre_process_image
 from utils.cameraParams import CameraParams
 from utils.poseBuffer import PoseBuffer
 from utils.arucoDetection import ArucoDetection, extract_arucos
-from utils.geometry import estimatePoseSingleMarkers
+from utils.geometry import estimatePoseSingleMarkers, transform_point
 from utils.mqttPeriodicPublisher import PeriodicPublisher
 
 def get_arguments():
@@ -63,9 +64,15 @@ def main():
         buffers[t] = b
 
         if not mqtt_settings is None:
-            pub = PeriodicPublisher(mqtt_settings, f'tool-{t}', b)
+            pub = PeriodicPublisher(mqtt_settings, f'tool/{t}', b)
             mqtt_publishers.append(pub)
     
+    base_frame_to_camera__rot = np.asarray([[-1., 0., 0.], 
+                                            [0., 1., 0.], 
+                                            [0., 0., -1.]])
+    camera_heigth_from_table__m = 1.1
+    base_frame_to_camera__pos = np.asarray([[.6, -1.3, 0.83 + camera_heigth_from_table__m]])
+
 
     # Crea una finestra per visualizzare lo stream
     cv2.namedWindow("Web Stream")
@@ -87,7 +94,13 @@ def main():
             cv2.drawFrameAxes(frame, mtx, dist_vec, rvecs[0].flatten(), tvecs[0].flatten(), 0.03)
 
             if a.id in available_tool_ids:
-                buffers[a.id].set_new_data(tvecs[0], rvecs[0])
+
+                rot_matrix, _ = cv2.Rodrigues(rvecs[0])
+
+                res_pos, res_rot = transform_point(base_frame_to_camera__pos, base_frame_to_camera__rot, tvecs[0].T, rot_matrix)
+                print(res_pos)
+                quaternion = R.from_matrix(res_rot).as_quat()
+                buffers[a.id].set_new_data(res_pos, quaternion)
 
         cv2.imshow("Web Stream", frame)
 

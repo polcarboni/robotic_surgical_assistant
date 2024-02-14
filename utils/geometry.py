@@ -58,3 +58,24 @@ def get_distance_from_stereo(p1, p2, k1, k2, delta_rot, delta_pos):
 
     # Stampa le coordinate 3D
     return (points_3d*-1).flatten()
+
+
+def transform_point(frame_pos:np.ndarray, frame_rot:np.ndarray, point_pos:np.ndarray, point_rot=np.eye(3)):
+    assert point_pos.shape == (1,3)
+    assert point_rot.shape == (3,3)
+    assert frame_pos.shape == (1,3)
+    assert frame_rot.shape == (3,3)
+
+    point_matrix = np.concatenate((point_rot, point_pos.T), 1)
+    point_matrix = np.concatenate((point_matrix, np.asarray([[0., 0., 0., 1.]])), 0)
+
+    transform_matrix = np.concatenate((frame_rot, frame_pos.T), 1)
+    transform_matrix = np.concatenate((transform_matrix, np.asarray([[0., 0., 0., 1.]])), 0)
+
+    result = np.matmul(transform_matrix, point_matrix)
+    #print(result)
+    new_pos = result[:3, -1]
+    new_rot = result[:3, :3]
+
+    return new_pos, new_rot
+

@@ -11,7 +11,7 @@ from utils.cameraParams import StereoCamera
 from utils.poseBuffer import PoseBuffer
 from utils.mqttPeriodicPublisher import PeriodicPublisher
 from hands_tracker import *
-from utils.geometry import get_distance_from_stereo
+from utils.geometry import get_distance_from_stereo, transform_point
 
 
 
@@ -53,6 +53,15 @@ def main():
     cv2.namedWindow("Stream_0")
     cv2.namedWindow("Stream_1")
 
+
+    base_frame_to_camera__rot = np.asarray([[1., 0., 0.], 
+                                            [0., 0., 1.], 
+                                            [0., -1., 0.]])
+    frontal_distance_from_person__m = 0.7
+    lateral_distance_from_person__m = 0.8
+    camera_heigth_from_floor__m = 1.3
+    base_frame_to_camera__pos = np.asarray([[1.8 - lateral_distance_from_person__m , -0.1 - frontal_distance_from_person__m, camera_heigth_from_floor__m]])
+
     
     while True:
         positions = []
@@ -84,6 +93,7 @@ def main():
             result = tracker.detect(frame)
             #print(result.hand_landmarks[0])
             position = get_hand_central_point(result, w, h)
+
             positions.append(position)
 
             
@@ -107,7 +117,15 @@ def main():
             k1, k2 = stereoParams.src.intrinsics.matrix, stereoParams.dst.intrinsics.matrix
             delta_rot, delta_pos = stereoParams.extrinsics.rot_matrix, stereoParams.extrinsics.trans_vector
             dist_3d = get_distance_from_stereo(positions[0], positions[1], k1, k2, delta_rot.T, -delta_pos)
-            data_buffer.set_new_data(dist_3d)
+
+            fixed_rot = np.asarray([math.pi, 0, 0])
+            dist_3d = np.expand_dims(dist_3d, 0)
+            pos, rot = transform_point(base_frame_to_camera__pos, base_frame_to_camera__rot, dist_3d)
+            #print(dist_3d, " --> ", pos)
+            #print(rot)
+            #fixed_pos = np.asarray([0, math.pi/2, 0])
+            fixed_rot = np.asarray([0, math.pi/2, 0])
+            data_buffer.set_new_data(pos, fixed_rot)
 
             dist = np.linalg.norm(dist_3d)
 

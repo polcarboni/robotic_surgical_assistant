@@ -1,4 +1,5 @@
 {
+    
     "broker_ip": "localhost",
     "broker_port": 1883,
     "pub_period": 0.5, 
