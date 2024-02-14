@@ -1,7 +1,15 @@
-import speech_recognition as sr
+from paho.mqtt import client as mqtt_client
+import voice_recognition as sr
 import time
 
+ip_broker = "192.168.207.95"
 pinze = ["pinze", "vince", "pinzi", "pinza", "pinse"]
+
+client = mqtt_client.Client()
+#client.on_connect = on_connect
+client.connect(ip_broker, 1883)
+client.loop_start()
+
 
 def listen_and_print(interval=0.5):
     recognizer = sr.Recognizer()
@@ -19,10 +27,15 @@ def listen_and_print(interval=0.5):
                 # TOOL 1
                 if "cucchiaio" in text:
                     print("CUCCHIAIO")
+                    #client.publish("activation/0", "Cucchiaio")
+                
+                
                 # TOOL 2
                 for i in pinze:
                     if i in text:
                         print("PINZE")
+                        #client.publish("activation/1", "Pinze")
+            
             
             except sr.UnknownValueError:
                 #print("Could not understand audio")
