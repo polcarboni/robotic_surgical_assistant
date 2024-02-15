@@ -63,29 +63,45 @@ class World:
         self.names.remove(name)
         return rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)(name)
 
-    def insert_tool(self, name, pose_in = (0,0,0), w=1):
+    def insert_tool(self, name, pose_param = (0,0,0,1.0,0,0,0)):
 
         spawn_model_client = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
         model_xml = open(f"/home/leo/robotic_surgical_assistant/prj_urdf/{name}.sdf", 'r').read()
+
         size = tuple([float(x) for x in model_xml[model_xml.find("<size>")+6:model_xml.find("</size>")].split()])
 
-        name = f"tool_{name}_{self.number_instances}"
         self.names.append(name)
         box_pose = geometry_msgs.msg.PoseStamped()
         box_pose.header.frame_id = "world"
-        box_pose.pose.orientation.w = 1.0
+
+        print(pose_param)
+        pose_in = pose_param[:3]
+        quaternion = pose_param[3:]
+        print(pose_in)
+        print(quaternion)
+
+        box_pose.pose.orientation.w = quaternion[0]
+        box_pose.pose.orientation.x = quaternion[1]
+        box_pose.pose.orientation.y = quaternion[2]
+        box_pose.pose.orientation.z = quaternion[3]
+
         box_pose.pose.position.x = pose_in[0]
         box_pose.pose.position.y = pose_in[1]
         box_pose.pose.position.z = pose_in[2]
 
-        self.scene.add_box(name, box_pose, size=size)
+        
 
         pos = Pose()
         pos.position.x = pose_in[0]
         pos.position.y = pose_in[1]
         pos.position.z = pose_in[2]
-        pos.orientation.w = w
 
+        pos.orientation.w = quaternion[0]
+        pos.orientation.x = quaternion[1]
+        pos.orientation.y = quaternion[2]
+        pos.orientation.z = quaternion[3]
+        
+        self.scene.add_box(name, box_pose, size=size)
         spawn_model_client(model_name=name, model_xml=model_xml, initial_pose=pos, reference_frame="world")
         self.number_instances += 1
      
@@ -93,4 +109,5 @@ class World:
     def delete_tool(self, name:str):
         self.names.remove(name)
         self.number_instances -= 1
+        self.scene.remove_world_object(name)
         return rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)(name)

@@ -38,7 +38,7 @@ def main():
         session = json.load(openfile)
         print(f'Loaded {len(session)} messages form the file..')
 
-    client = mqtt_client.Client()
+    client = mqtt_client.Client(mqtt_client.CallbackAPIVersion.VERSION1)
     client.on_connect = on_connect
     client.connect(args.ip, args.port)
     client.loop_start()
