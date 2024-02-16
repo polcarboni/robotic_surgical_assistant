@@ -57,10 +57,9 @@ def main():
     base_frame_to_camera__rot = np.asarray([[1., 0., 0.], 
                                             [0., 0., 1.], 
                                             [0., -1., 0.]])
-    frontal_distance_from_person__m = 0.7
-    lateral_distance_from_person__m = 0.8
+    
     camera_heigth_from_floor__m = 1.3
-    base_frame_to_camera__pos = np.asarray([[1.8 - lateral_distance_from_person__m , -0.1 - frontal_distance_from_person__m, camera_heigth_from_floor__m]])
+    base_frame_to_camera__pos = np.asarray([[1.1 , -1.9, camera_heigth_from_floor__m]])
 
     
     while True:
@@ -145,4 +144,4 @@ if __name__ == '__main__':
     main()
     # check that the two webcams coincide:
     # serena's webcam should be in Stream_0, Pietro's webcam in Stream_1 
-    # python hand_estimation/detect_hand.py --source_0 /dev/video2 --source_1 /dev/video4 --params settings/stereo_setup.json  --mqtt settings/mqtt_pub_settings.json
+    # python hand_estimation/detect_hand.py --source_1 /dev/video2 --source_0 /dev/video4 --params settings/stereo_setup.json  --mqtt settings/mqtt_hand_settings.json
