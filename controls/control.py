@@ -127,16 +127,33 @@ def generate_pose(coord_or):
     # Converts coordinates + RPY in Pose
     # x, y, z coordinted referred to world RF
     # rx, py, yz rotation angle (in radiants) as roll, pith and yaw on x,y,z
-    x, y, z, rx, py, yz = coord_or
-    pose = geometry_msgs.msg.Pose()
+    if len(coord_or) == 6:
+        x, y, z, rx, py, yz = coord_or
+        pose = geometry_msgs.msg.Pose()
 
-    pose.position.x = x
-    pose.position.y = y
-    pose.position.z = z
+        pose.position.x = x
+        pose.position.y = y
+        pose.position.z = z
 
-    quat = quaternion_from_euler(rx, py, yz)
-    pose.orientation.x = quat[0]
-    pose.orientation.y = quat[1]
-    pose.orientation.z = quat[2]
-    pose.orientation.w = quat[3]
-    return pose
+        quat = quaternion_from_euler(rx, py, yz)
+        pose.orientation.x = quat[0]
+        pose.orientation.y = quat[1]
+        pose.orientation.z = quat[2]
+        pose.orientation.w = quat[3]
+        return pose
+    
+    elif len(coord_or) == 7:
+        x, y, z, qx, qy, qz, qw = coord_or
+        pose = geometry_msgs.msg.Pose()
+
+        pose.position.x = x
+        pose.position.y = y
+        pose.position.z = z
+        pose.orientation.x = qx
+        pose.orientation.y = qy
+        pose.orientation.z = qz
+        pose.orientation.w = qw
+        return pose
+    
+    else:
+        return None

@@ -44,21 +44,25 @@ def main():
     client.loop_start()
 
     current_ts = time.time()
-    for idx, m in enumerate(session):
-        message = m['message']
-        topic = m['topic']
-        original_ts = m['ts']
+    while True:
+        try:
+            for idx, m in enumerate(session):
+                message = m['message']
+                topic = m['topic']
+                original_ts = m['ts']
 
-        if idx > 0:
-            original_dt = original_ts - session[idx-1]['ts']
-            simuation_dt = time.time() - current_ts
-            sleep_time = original_dt - simuation_dt
-            if sleep_time > 0:
-                time.sleep(sleep_time)
+                if idx > 0:
+                    original_dt = original_ts - session[idx-1]['ts']
+                    simuation_dt = time.time() - current_ts
+                    sleep_time = original_dt - simuation_dt
+                    if sleep_time > 0:
+                        time.sleep(sleep_time)
 
-        current_ts = time.time()
-        client.publish(topic, message)
-        print(f"{topic} --> {message}")
+                current_ts = time.time()
+                client.publish(topic, message)
+                print(f"{topic} --> {message}")
+        except KeyboardInterrupt:
+            break
 
     return
     

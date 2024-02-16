@@ -3,7 +3,7 @@ from paho.mqtt import client as mqtt_client
 import ast
 import argparse
 import threading
-#CONTROLLO DEGLI STATI
+import sys
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Testing SamFW')
@@ -54,14 +54,13 @@ class Simulation:
         '''
 
     def run(self):
-        self.client.loop_start()
-        while True:
-            try:        
-                pass
-            except Exception as e:
-                print(f"Exception {e} mf")
-                break
-        self.client.loop_stop()
+        print("Excecution started")
+        try:
+            self.client.loop_forever()
+        except KeyboardInterrupt:
+            print("Exception")
+            self.client.disconnect()
+        
     
     def _on_disconnect(self,client,userdata,flags,rc, propertiers):
         print("Client MQTT disconnected")
@@ -71,14 +70,7 @@ class Simulation:
             print("Connected to MQTT Broker!")
         else:
             print("Failed to connect, return code %d\n", rc)
-        '''client.subscribe([("topic/#",0),("data/#",0), ("activation/#",0)])
-        client.message_callback_add("topic/#", self._hand_position)
-        client.message_callback_add("data/#", self._tool_position)
-        client.message_callback_add("activation/#", self._voice_act)  #va comunque fatta subscribe
-        client.on_disconnect = self._on_disconnect
-        self.client = client
-        self.client.timeout = 180'''
-        print(self.client)
+        
 
     def _on_message(self, client, userdata, msg):
         print(f"{msg.topic} |  {msg.payload.decode()}")
@@ -89,31 +81,30 @@ class Simulation:
             if ret:
                 self.state_lock.acquire()
                 self.STATE = 0
-                print(f"Actual state: {self.STATE}")
-                self.state_lock.release()
+                
                 
             else:
                 self.state_lock.acquire()
                 self.STATE = 2
-                print(f"Actual state: {self.STATE}")
-                self.state_lock.release()
+            print(f"Actual state: {self.STATE}")
+            self.state_lock.release()
+            print('------------------------------------')
 
-        print("DEBUG: data/hand_position messaged arruives")
         t = None
         if self.STATE == 2 and msg.payload.decode() != '' and self.actual_name in self.assistant.world.names:
-            self.state_lock.acquire()
+            self.state_lock.acquire()   
             self.STATE = 3
             self.state_lock.release()
-            print("MSG: ", msg.payload.decode())
+            print('------------------------------------')
             print("Hand position Callback")
             print(f"{msg.topic} |  {msg.payload.decode()}")
-            print('------- Routine 1 -------')
+            
             t = threading.Thread(target = r1, args= (self,self.actual_name, tuple(ast.literal_eval(msg.payload.decode()))))
             t.start()
-            print('------- Routine 1 ended -------')
+            print('------------------------------------')
         
     def _tool_position(self, client, userdata, msg):
-        print("DEBUG: data/tool/i message arrived")
+
         def r2(self,p1, p2):
             ret = self.assistant.routine_2(p1,p2)
             if ret:
@@ -126,39 +117,48 @@ class Simulation:
 
                 self.state_lock.acquire()
                 self.STATE = 0
-                print(f"Actual state: {self.STATE} ")
+                print(f"Actual state: {self.STATE} \n------------------------------------")
                 self.state_lock.release()
 
 
         name = self.objs[int(msg.topic.split("/")[-1])]
-        if self.STATE == 0 and msg.payload.decode() != '' and name not in self.assistant.world.names:
-            self.state_lock.acquire()
-            self.STATE = 4
-            self.state_lock.release()
-            print('------- Routine 2 -------')
-            t = threading.Thread(target = r2, args= (self, name, tuple(ast.literal_eval(msg.payload.decode()))))
-            t.start()
-            print('------- Routine 2 ended -------')
+        if self.STATE == 0 and msg.payload.decode() != '' :
+            if name not in self.assistant.world.names:
+                self.state_lock.acquire()
+                self.STATE = 4
+                self.state_lock.release()
+                t = threading.Thread(target = r2, args= (self, name, tuple(ast.literal_eval(msg.payload.decode()))))
+                t.start()
 
-            print("Tool position Callback")
-            print(f"{msg.topic} |  {msg.payload.decode()}")
+                
+            else:
+                print(f"Tool {name} already exists in the scene!")
 
     def _voice_act(self, client, userdata, msg):
-        print("DEBUG: voice message arrived")
         if self.STATE == 0:
-            self.state_lock.acquire()
-            self.STATE = 1
-            self.actual_name = self.objs[int(msg.topic.split('/')[1])]
-            self.STATE = 2
-            self.state_lock.release()
             print('------------------------------------')
             print("Voice activation Callback")
             print(f"{msg.topic} |  {msg.payload.decode()}")
+            
+            self.state_lock.acquire()
+            self.STATE = 1
+            self.actual_name = self.objs[int(msg.topic.split('/')[1])]
+            if self.actual_name not in self.assistant.world.names:
+                print(f"Object not in scene!")
+                self.STATE = 0
+            else:
+                self.STATE = 2
+                print('Waiting for hand position...')
+            self.state_lock.release()
             print('------------------------------------')
-            print('Waiting for hand position...')
+            
+            
 
 if __name__ == '__main__':
-    Simulation().run()
+    try:
+        Simulation().run()
+    except KeyboardInterrupt:
+        sys.exit()
 '''
 NOTE: 0,0,0 as orientation means the gripper points up, if you want the gripper points at least down, the correct orientation is (3.1415,0,0)
 '''

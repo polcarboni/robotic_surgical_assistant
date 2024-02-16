@@ -7,6 +7,8 @@ from geometry_msgs.msg import Pose
 import sys
 import moveit_msgs
 import re
+from tf.transformations import quaternion_from_euler
+
 
 
 class World:
@@ -74,16 +76,20 @@ class World:
         box_pose = geometry_msgs.msg.PoseStamped()
         box_pose.header.frame_id = "world"
 
-        print(pose_param)
         pose_in = pose_param[:3]
         quaternion = pose_param[3:]
-        print(pose_in)
-        print(quaternion)
-
-        box_pose.pose.orientation.w = quaternion[0]
-        box_pose.pose.orientation.x = quaternion[1]
-        box_pose.pose.orientation.y = quaternion[2]
-        box_pose.pose.orientation.z = quaternion[3]
+        
+        if len(pose_param) == 7:
+            quaternion = pose_param[3:]
+        elif len(pose_param)==6:
+            quaternion = quaternion_from_euler(pose_param[3],pose_param[4],pose_param[5])
+        else:
+            quaternion = (0.,0.,0.,1.)
+        
+        box_pose.pose.orientation.x = quaternion[0]
+        box_pose.pose.orientation.y = quaternion[1]
+        box_pose.pose.orientation.z = quaternion[2]
+        box_pose.pose.orientation.w = quaternion[3]
 
         box_pose.pose.position.x = pose_in[0]
         box_pose.pose.position.y = pose_in[1]
@@ -96,11 +102,12 @@ class World:
         pos.position.y = pose_in[1]
         pos.position.z = pose_in[2]
 
-        pos.orientation.w = quaternion[0]
-        pos.orientation.x = quaternion[1]
-        pos.orientation.y = quaternion[2]
-        pos.orientation.z = quaternion[3]
-        
+        pos.orientation.x = quaternion[0]
+        pos.orientation.y = quaternion[1]
+        pos.orientation.z = quaternion[2]
+        pos.orientation.w = quaternion[3]
+
+
         self.scene.add_box(name, box_pose, size=size)
         spawn_model_client(model_name=name, model_xml=model_xml, initial_pose=pos, reference_frame="world")
         self.number_instances += 1
