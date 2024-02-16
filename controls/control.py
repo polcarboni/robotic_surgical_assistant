@@ -88,7 +88,7 @@ class Control:
             box_pose.pose.orientation.w = 1.0
             box_pose.pose.position.z = 0.1  # above the panda_hand frame
             box_name = "attached_box"
-            self.scene.add_box(box_name, box_pose, size=(0.05, 0.05, 0.05))
+            self.scene.add_box(box_name, box_pose, size=(0.3, 0.03, 0.04))
 
             # Check if moveit received the command and then attach the box to the arm
             scene_objects = self.scene.get_known_object_names()
@@ -107,7 +107,6 @@ class Control:
             return True
         else:
             # se chiude senza niente da un errore, ma funziona lo stesso
-            print(r.error)
             return r.error
     
     def move_to_config(self, q):

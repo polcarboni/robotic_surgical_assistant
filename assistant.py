@@ -16,6 +16,7 @@ class Assistant:
         for obj in self.objects:
             self.world.insert_tool(obj, tuple(self.positions[obj]))
 
+        
         self.cntl = Control(self.world.get_controllers() )
         self.cntl.move_to_rest()
         
@@ -39,6 +40,10 @@ class Assistant:
         # Understand if destination coordinates are valid
         valid = self.cntl.move_group.plan(generate_pose(destination_coordinates))[0]
         if valid:
+            tmp_obj = list(destination_coordinates[:3])
+            tmp_obj[2]-=0.2
+            self.world.insert_hand((tmp_obj))
+            tmp_obj=None
             print("R1: Position planned and valid")
             self.cntl.move_to_position(generate_pose(obj_loc))
             print("R1: Position reached")
@@ -47,7 +52,8 @@ class Assistant:
             print("R1: Object taken")
 
             self.cntl.move_to_position(generate_pose(destination_coordinates))
-            time.sleep(1)
+            time.sleep(2.5)
+            self.world.remove_hand()
             self.cntl.open_gripper() # ToDo: manage the interaction with the human
             self.world.delete_tool(name)
             print("R1: Object delivered")
@@ -86,12 +92,13 @@ class Assistant:
 
 
             # push the orientation of the robot to the ones which can actually grasp the object
-            robot_coordinates[2]+=0.105 ## DA CAMBIARE!!
+            robot_coordinates[2]+=0.1
             robot_coordinates[3] = PI
             robot_coordinates[4] = 0
             robot_coordinates[5] = robot_coordinates[5]  - PI/4
             valid = self.cntl.move_group.plan(generate_pose(robot_coordinates))[0] #!!!!
             if valid:
+                print("Valid goal position.")
                 
                 self.world.insert_tool(name, object_coordinates)
 
@@ -110,6 +117,7 @@ class Assistant:
                 print("Object placed, rip")
 
                 self.world.delete_tool(name)
+                time.sleep(1)
                 self.world.insert_tool(name, tuple(self.positions[name]))                
 
                 self.cntl.move_to_rest()

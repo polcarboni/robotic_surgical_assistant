@@ -7,7 +7,7 @@ import sys
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Testing SamFW')
-    parser.add_argument('--ip', type=str, default="localhost" )
+    parser.add_argument('--ip', type=str, default="155.185.73.120" )
     
     args = parser.parse_args()
     return args
@@ -33,6 +33,7 @@ class Simulation:
         self.client.timeout = 180
         
         self.assistant = Assistant()
+        
         self.name = None
         self.objs = dict()
         self.objs[0] = "pinza_box"
@@ -41,6 +42,8 @@ class Simulation:
         self.state_lock.acquire()
         self.STATE = 0
         self.state_lock.release()
+
+        self.wrong_position_hand = 0
         '''
         0 -> Idle
         1 -> Voice Activated, waiting for hand position
@@ -81,11 +84,17 @@ class Simulation:
             if ret:
                 self.state_lock.acquire()
                 self.STATE = 0
-                
+                self.wrong_position_hand=0
                 
             else:
                 self.state_lock.acquire()
-                self.STATE = 2
+                self.wrong_position_hand+=1
+                if self.wrong_position_hand < 4:
+                    self.STATE = 2
+                else:
+                    self.STATE = 0
+                    self.wrong_position_hand = 0
+                
             print(f"Actual state: {self.STATE}")
             self.state_lock.release()
             print('------------------------------------')

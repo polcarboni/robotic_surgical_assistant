@@ -118,3 +118,22 @@ class World:
         self.number_instances -= 1
         self.scene.remove_world_object(name)
         return rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)(name)
+
+    def insert_hand(self,pose_in=(0,0,0)):
+        spawn_model_client = rospy.ServiceProxy('/gazebo/spawn_sdf_model', SpawnModel)
+        model_xml = open(f"/home/leo/robotic_surgical_assistant/prj_urdf/hand_box.sdf", 'r').read()
+
+        pos = Pose()
+
+        pos.orientation.w = 1.0
+
+        pos.position.x = pose_in[0]
+        pos.position.y = pose_in[1]
+        pos.position.z = pose_in[2]
+
+
+
+        spawn_model_client(model_name="sphere_hand", model_xml=model_xml, initial_pose=pos, reference_frame="world")
+    
+    def remove_hand(self):
+        return rospy.ServiceProxy('/gazebo/delete_model', DeleteModel)("sphere_hand")
