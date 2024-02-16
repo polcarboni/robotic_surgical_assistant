@@ -90,8 +90,6 @@ class Assistant:
             robot_coordinates[3] = PI
             robot_coordinates[4] = 0
             robot_coordinates[5] = robot_coordinates[5]  - PI/4
-            print(object_coordinates)
-            print(robot_coordinates)
             valid = self.cntl.move_group.plan(generate_pose(robot_coordinates))[0] #!!!!
             if valid:
                 
