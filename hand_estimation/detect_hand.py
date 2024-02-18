@@ -23,6 +23,7 @@ def get_arguments():
     parser = VideoStreamArgs(how_many_cameras=2)
     parser.add_argument("--params", "-p", type=str, required=True, help="Calibration parameters of your stereo setup, point here the path of the .json file.")
     parser.add_argument("--mqtt", type=str, default='', help="If you intend to activate a periodic MQTT publisher, set here the relative .json setting file.")
+    parser.add_argument("--show-hands" , action='store_true', help="If you want to plot hands marker")
     
     # If needed. add other custom stuff here.
     return parser
@@ -34,8 +35,6 @@ def main():
     args = videoStreamerArgs.parse_args()
     video_streams = videoStreamerArgs.open_video_stream()
     
-    #tmp
-    #video_streams = [video_streams[0]]
     
     cam_params_path = str(args.params)
     assert os.path.isfile(cam_params_path)
@@ -46,6 +45,8 @@ def main():
     data_buffer = PoseBuffer()
     if not mqtt_settings is None:
         pub = PeriodicPublisher(mqtt_settings, f'hand_position', data_buffer)
+
+    show_hands = bool(args.show_hands)
 
     tracker = HandDetector()
     dist = None
@@ -105,8 +106,9 @@ def main():
                     text_pos = (position[0] + 5, position[1] + 5)
                     distance_text = "{:.3f}".format(dist)
                     cv2.putText(frame, distance_text,(text_pos), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 0), 1, cv2.LINE_AA)
-
-            #frame = draw_landmarks_on_image(frame, result)
+            
+            if show_hands:
+                frame = draw_landmarks_on_image(frame, result)
 
             cv2.imshow(f"Stream_{i}", frame)
 
