@@ -1,0 +1,31 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <model name='lanchet'>
+    <link name="handle">
+    	<pose>0 0 0 0 0 0</pose>
+      <gravity>false</gravity>
+      <visual name='visual_handle'>
+        <geometry>
+          <box>
+            <size>0.1 0.1 0.1</size>
+          </box>
+        </geometry>
+        <material>
+          <script>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+            <name>Gazebo/White</name>
+          </script>
+        </material>
+      </visual>
+      <collision name='collision_handle'>
+        <geometry>
+          <box>
+            <size>0.1 0.1 0.1</size>
+          </box>
+        </geometry>
+        
+      </collision>
+    </link>
+  
+</model>
+</sdf>

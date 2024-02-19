@@ -8,7 +8,7 @@ PI = 3.141592653589793
 
 class Assistant:
     def __init__(self, filename = "/home/leo/robotic_surgical_assistant/controls/object_positions.json"):
-        self.objects = ["start_tray","end_tray","pinza_box", "cucchiaio_box" ]
+        self.objects = ["start_tray","end_tray","pinza_box", "cucchiaio_box", "camera_hand", "camera_tool" ]
         self.world = World()
         with open(filename, "r") as f:
             self.positions = json.load(f)
@@ -37,12 +37,14 @@ class Assistant:
         obj_loc = (loc[0], loc[1], loc[2]+0.1 , PI, 0, -PI/4)
         print("R1: Moving into : ", obj_loc)
 
+        tmp_obj = list(destination_coordinates[:3])
+        tmp_obj[2]-=0.2
+        self.world.insert_hand((tmp_obj))
         # Understand if destination coordinates are valid
         valid = self.cntl.move_group.plan(generate_pose(destination_coordinates))[0]
         if valid:
-            tmp_obj = list(destination_coordinates[:3])
-            tmp_obj[2]-=0.2
-            self.world.insert_hand((tmp_obj))
+            
+            
             tmp_obj=None
             print("R1: Position planned and valid")
             self.cntl.move_to_position(generate_pose(obj_loc))
@@ -63,6 +65,7 @@ class Assistant:
             print('------- Routine 1 ended-------')
             return True
         else:
+            self.world.remove_hand()
             print("R1: Position not valid")
             print('------- Routine 1 ended-------')
             return False
