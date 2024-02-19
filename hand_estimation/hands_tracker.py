@@ -51,7 +51,7 @@ def get_hand_central_point(detection_result, image_w, image_h):
 
 
 def draw_landmarks_on_image(image, detection_result):
-  image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+  #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
   hand_landmarks_list = detection_result.hand_landmarks
   handedness_list = detection_result.handedness
   annotated_image = np.copy(image)
@@ -85,4 +85,4 @@ def draw_landmarks_on_image(image, detection_result):
                 (text_x, text_y), cv2.FONT_HERSHEY_DUPLEX,
                 FONT_SIZE, HANDEDNESS_TEXT_COLOR, FONT_THICKNESS, cv2.LINE_AA)
 
-  return cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
+  return annotated_image#cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)

@@ -137,4 +137,4 @@ def render_aruco(frame, aruco:ArucoDetection,
 if __name__ == '__main__':
     main()
     
-    # python detect_arucos.py --source 2 --params settings/pietro_webcam.json --mqtt settings/mqtt_pub_settings.json
+    # python detect_arucos.py --source 192.168.207.144 --params settings/pietro_phone.json --mqtt settings/mqtt_tools_settings.json

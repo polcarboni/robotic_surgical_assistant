@@ -2,6 +2,6 @@
     
     "broker_ip": "localhost",
     "broker_port": 1883,
-    "pub_period": 0.5, 
+    "pub_period": 1.0, 
     "parent_topic": "data" 
 }

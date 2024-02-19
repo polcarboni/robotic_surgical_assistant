@@ -23,6 +23,7 @@ def get_arguments():
     parser = VideoStreamArgs(how_many_cameras=2)
     parser.add_argument("--params", "-p", type=str, required=True, help="Calibration parameters of your stereo setup, point here the path of the .json file.")
     parser.add_argument("--mqtt", type=str, default='', help="If you intend to activate a periodic MQTT publisher, set here the relative .json setting file.")
+    parser.add_argument("--show-hands" , action='store_true', help="If you want to plot hands marker")
     
     # If needed. add other custom stuff here.
     return parser
@@ -34,8 +35,6 @@ def main():
     args = videoStreamerArgs.parse_args()
     video_streams = videoStreamerArgs.open_video_stream()
     
-    #tmp
-    #video_streams = [video_streams[0]]
     
     cam_params_path = str(args.params)
     assert os.path.isfile(cam_params_path)
@@ -47,6 +46,8 @@ def main():
     if not mqtt_settings is None:
         pub = PeriodicPublisher(mqtt_settings, f'hand_position', data_buffer)
 
+    show_hands = bool(args.show_hands)
+
     tracker = HandDetector()
     dist = None
 
@@ -57,10 +58,9 @@ def main():
     base_frame_to_camera__rot = np.asarray([[1., 0., 0.], 
                                             [0., 0., 1.], 
                                             [0., -1., 0.]])
-    frontal_distance_from_person__m = 0.7
-    lateral_distance_from_person__m = 0.8
+    
     camera_heigth_from_floor__m = 1.3
-    base_frame_to_camera__pos = np.asarray([[1.8 - lateral_distance_from_person__m , -0.1 - frontal_distance_from_person__m, camera_heigth_from_floor__m]])
+    base_frame_to_camera__pos = np.asarray([[1.1 , -1.9, camera_heigth_from_floor__m]])
 
     
     while True:
@@ -78,7 +78,7 @@ def main():
 
             #let's undistort the image
             
-            alpha = 1.0
+            alpha = 0.0
             mtx = single_cam_params.intrinsics.matrix
             distortion = single_cam_params.distortions.dist_vector
             w, h = single_cam_params.width, single_cam_params.height
@@ -96,7 +96,8 @@ def main():
 
             positions.append(position)
 
-            
+            if show_hands:
+                frame = draw_landmarks_on_image(frame, result)
 
             if not position is None:
                 cv2.circle(frame, (position), radius=5, color=(0, 255, 0), thickness=-1)
@@ -106,8 +107,8 @@ def main():
                     text_pos = (position[0] + 5, position[1] + 5)
                     distance_text = "{:.3f}".format(dist)
                     cv2.putText(frame, distance_text,(text_pos), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 0), 1, cv2.LINE_AA)
-
-            #frame = draw_landmarks_on_image(frame, result)
+            
+            
 
             cv2.imshow(f"Stream_{i}", frame)
 
@@ -116,7 +117,7 @@ def main():
         if not (positions[0] is None or positions[1] is None):
             k1, k2 = stereoParams.src.intrinsics.matrix, stereoParams.dst.intrinsics.matrix
             delta_rot, delta_pos = stereoParams.extrinsics.rot_matrix, stereoParams.extrinsics.trans_vector
-            dist_3d = get_distance_from_stereo(positions[0], positions[1], k1, k2, delta_rot.T, -delta_pos)
+            dist_3d = get_distance_from_stereo(positions[0], positions[1], k1, k2, delta_rot, delta_pos)
 
             fixed_rot = np.asarray([math.pi, 0, 0])
             dist_3d = np.expand_dims(dist_3d, 0)
@@ -145,4 +146,4 @@ if __name__ == '__main__':
     main()
     # check that the two webcams coincide:
     # serena's webcam should be in Stream_0, Pietro's webcam in Stream_1 
-    # python hand_estimation/detect_hand.py --source_0 /dev/video2 --source_1 /dev/video4 --params settings/stereo_setup.json  --mqtt settings/mqtt_pub_settings.json
+    # python hand_estimation/detect_hand.py --source_1 /dev/video2 --source_0 /dev/video4 --params settings/stereo_setup.json  --mqtt settings/mqtt_hand_settings.json --show-hands
