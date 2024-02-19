@@ -78,7 +78,7 @@ def main():
 
             #let's undistort the image
             
-            alpha = 1.0
+            alpha = 0.0
             mtx = single_cam_params.intrinsics.matrix
             distortion = single_cam_params.distortions.dist_vector
             w, h = single_cam_params.width, single_cam_params.height
@@ -96,7 +96,8 @@ def main():
 
             positions.append(position)
 
-            
+            if show_hands:
+                frame = draw_landmarks_on_image(frame, result)
 
             if not position is None:
                 cv2.circle(frame, (position), radius=5, color=(0, 255, 0), thickness=-1)
@@ -107,8 +108,7 @@ def main():
                     distance_text = "{:.3f}".format(dist)
                     cv2.putText(frame, distance_text,(text_pos), cv2.FONT_HERSHEY_DUPLEX,1, (0, 255, 0), 1, cv2.LINE_AA)
             
-            if show_hands:
-                frame = draw_landmarks_on_image(frame, result)
+            
 
             cv2.imshow(f"Stream_{i}", frame)
 
@@ -117,7 +117,7 @@ def main():
         if not (positions[0] is None or positions[1] is None):
             k1, k2 = stereoParams.src.intrinsics.matrix, stereoParams.dst.intrinsics.matrix
             delta_rot, delta_pos = stereoParams.extrinsics.rot_matrix, stereoParams.extrinsics.trans_vector
-            dist_3d = get_distance_from_stereo(positions[0], positions[1], k1, k2, delta_rot.T, -delta_pos)
+            dist_3d = get_distance_from_stereo(positions[0], positions[1], k1, k2, delta_rot, delta_pos)
 
             fixed_rot = np.asarray([math.pi, 0, 0])
             dist_3d = np.expand_dims(dist_3d, 0)
@@ -146,4 +146,4 @@ if __name__ == '__main__':
     main()
     # check that the two webcams coincide:
     # serena's webcam should be in Stream_0, Pietro's webcam in Stream_1 
-    # python hand_estimation/detect_hand.py --source_1 /dev/video2 --source_0 /dev/video4 --params settings/stereo_setup.json  --mqtt settings/mqtt_hand_settings.json
+    # python hand_estimation/detect_hand.py --source_1 /dev/video2 --source_0 /dev/video4 --params settings/stereo_setup.json  --mqtt settings/mqtt_hand_settings.json --show-hands
